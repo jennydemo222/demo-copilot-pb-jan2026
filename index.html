@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Navigation System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📁 File Navigation System</h1>
+        </header>
+        
+        <div class="main-content">
+            <div class="toolbar">
+                <button id="newFolderBtn" class="btn">➕ New Folder</button>
+                <button id="newFileBtn" class="btn">📄 New File</button>
+                <button id="deleteBtn" class="btn btn-danger">🗑️ Delete</button>
+                <span class="current-path" id="currentPath">Root</span>
+            </div>
+            
+            <div class="breadcrumb" id="breadcrumb">
+                <span class="breadcrumb-item" data-path="">🏠 Home</span>
+            </div>
+            
+            <div class="file-browser">
+                <div class="file-list" id="fileList">
+                    <!-- Files and folders will be dynamically added here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
