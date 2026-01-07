@@ -5,8 +5,9 @@ A simple login function implementation in Node.js with an Event API for logging 
 ## Features
 
 - User authentication with username and password
-- Input validation
-- Error handling
+- Comprehensive input validation
+- Enhanced error handling with try-catch blocks
+- Protection against common security issues (input length validation, special character filtering)
 - Role-based user information
 - **Event API** for creating and retrieving events
 - Event filtering and counting capabilities
@@ -81,13 +82,22 @@ The following test users are available:
 Authenticates a user with the provided credentials.
 
 **Parameters:**
-- `username` (string): The username to authenticate
-- `password` (string): The password to verify
+- `username` (string): The username to authenticate (max 255 characters, alphanumeric with dots, hyphens, and underscores)
+- `password` (string): The password to verify (max 255 characters)
 
 **Returns:**
 - Object with the following structure:
   - On success: `{ success: true, user: { username, role }, message: 'Login successful' }`
   - On failure: `{ success: false, error: 'Error message' }`
+
+**Error Handling:**
+The login function includes comprehensive error handling for:
+- Undefined, null, or non-string parameters
+- Empty username or password (after trimming whitespace)
+- Username or password exceeding 255 characters
+- Username containing invalid characters (only letters, numbers, dots, hyphens, and underscores are allowed)
+- Invalid credentials (user not found or incorrect password)
+- Unexpected runtime errors (caught and returned safely)
 
 ### Event API
 
