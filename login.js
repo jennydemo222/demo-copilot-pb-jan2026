@@ -6,6 +6,10 @@
 /**
  * Simulated user database for demonstration purposes
  * In a real application, this would be replaced with actual database queries
+ * 
+ * ⚠️ SECURITY WARNING: Passwords are stored in plain text for demonstration only.
+ * In production, NEVER store passwords in plain text. Always use proper password
+ * hashing algorithms like bcrypt, argon2, or scrypt.
  */
 const users = [
   { username: 'admin', password: 'admin123', role: 'administrator' },
