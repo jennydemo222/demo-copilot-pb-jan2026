@@ -24,67 +24,101 @@ const users = [
  * @returns {Object} Authentication result with success status and user info or error message
  */
 function login(username, password) {
-  // Validate input parameters
-  if (typeof username !== 'string') {
+  try {
+    // Validate input parameters exist and are of correct type
+    if (username === undefined || username === null || typeof username !== 'string') {
+      return {
+        success: false,
+        error: 'Username is required and must be a string'
+      };
+    }
+
+    if (password === undefined || password === null || typeof password !== 'string') {
+      return {
+        success: false,
+        error: 'Password is required and must be a string'
+      };
+    }
+
+    // Validate input length BEFORE trimming to prevent DOS attacks with large strings
+    if (username.length > 255) {
+      return {
+        success: false,
+        error: 'Username is too long (maximum 255 characters)'
+      };
+    }
+
+    if (password.length > 255) {
+      return {
+        success: false,
+        error: 'Password is too long (maximum 255 characters)'
+      };
+    }
+
+    // Trim whitespace from inputs
+    username = username.trim();
+    password = password.trim();
+
+    // Check if username and password are not empty after trimming
+    if (username.length === 0) {
+      return {
+        success: false,
+        error: 'Username cannot be empty'
+      };
+    }
+
+    if (password.length === 0) {
+      return {
+        success: false,
+        error: 'Password cannot be empty'
+      };
+    }
+
+    // Validate username format - only allow alphanumeric, underscore, hyphen, and dot
+    const usernamePattern = /^[a-zA-Z0-9._-]+$/;
+    if (!usernamePattern.test(username)) {
+      return {
+        success: false,
+        error: 'Username contains invalid characters (only letters, numbers, dots, hyphens, and underscores allowed)'
+      };
+    }
+
+    // Find user in the database
+    const user = users.find(u => u.username === username);
+
+    if (!user) {
+      return {
+        success: false,
+        error: 'Invalid username or password'
+      };
+    }
+
+    // Verify password
+    if (user.password !== password) {
+      return {
+        success: false,
+        error: 'Invalid username or password'
+      };
+    }
+
+    // Successful login
+    return {
+      success: true,
+      user: {
+        username: user.username,
+        role: user.role
+      },
+      message: 'Login successful'
+    };
+  } catch (error) {
+    // Catch any unexpected errors and return a safe error message
+    // In production, you should log the actual error for debugging
+    console.error('Login error:', error);
     return {
       success: false,
-      error: 'Username is required and must be a string'
+      error: 'An unexpected error occurred during login. Please try again.'
     };
   }
-
-  if (typeof password !== 'string') {
-    return {
-      success: false,
-      error: 'Password is required and must be a string'
-    };
-  }
-
-  // Trim whitespace from inputs
-  username = username.trim();
-  password = password.trim();
-
-  // Check if username and password are not empty after trimming
-  if (username.length === 0) {
-    return {
-      success: false,
-      error: 'Username cannot be empty'
-    };
-  }
-
-  if (password.length === 0) {
-    return {
-      success: false,
-      error: 'Password cannot be empty'
-    };
-  }
-
-  // Find user in the database
-  const user = users.find(u => u.username === username);
-
-  if (!user) {
-    return {
-      success: false,
-      error: 'Invalid username or password'
-    };
-  }
-
-  // Verify password
-  if (user.password !== password) {
-    return {
-      success: false,
-      error: 'Invalid username or password'
-    };
-  }
-
-  // Successful login
-  return {
-    success: true,
-    user: {
-      username: user.username,
-      role: user.role
-    },
-    message: 'Login successful'
-  };
 }
 
 module.exports = { login };
