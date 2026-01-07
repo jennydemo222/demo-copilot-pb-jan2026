@@ -199,6 +199,56 @@ test('Should fail with array as metadata', () => {
   assert(result.error, 'Should have error message');
 });
 
+// Test 21: Metadata should not be mutated after event creation
+test('Should protect stored event from external metadata mutations', () => {
+  clearEvents();
+  const metadata = {
+    user: { id: 1, name: 'John' },
+    tags: ['tag1', 'tag2']
+  };
+  createEvent('test', 'Test event', metadata);
+  
+  // Mutate the original metadata
+  metadata.user.name = 'Jane';
+  metadata.tags.push('tag3');
+  
+  // Retrieve the event and verify it wasn't affected
+  const retrieved = getEventById(1);
+  assert(retrieved.success === true, 'Should retrieve event successfully');
+  assert(retrieved.event.metadata.user.name === 'John', 'User name should not be mutated');
+  assert(retrieved.event.metadata.tags.length === 2, 'Tags array should not be mutated');
+});
+
+// Test 22: Retrieved event metadata should not mutate stored event
+test('Should protect stored event from retrieved metadata mutations', () => {
+  clearEvents();
+  createEvent('test', 'Test event', { value: { count: 10 } });
+  
+  // Retrieve and mutate
+  const retrieved1 = getEventById(1);
+  retrieved1.event.metadata.value.count = 999;
+  
+  // Retrieve again and verify original is intact
+  const retrieved2 = getEventById(1);
+  assert(retrieved2.event.metadata.value.count === 10, 'Stored event should not be mutated');
+});
+
+// Test 23: getEvents() results should not mutate stored events
+test('Should protect stored events from getEvents() result mutations', () => {
+  clearEvents();
+  createEvent('test', 'Test event', { data: ['a', 'b'] });
+  
+  // Get events and mutate
+  const events = getEvents();
+  events.events[0].metadata.data.push('c');
+  
+  // Retrieve and verify original is intact
+  const retrieved = getEventById(1);
+  assert(retrieved.event.metadata.data.length === 2, 'Stored event should not be mutated');
+  assert(retrieved.event.metadata.data[0] === 'a', 'Original data should be intact');
+  assert(retrieved.event.metadata.data[1] === 'b', 'Original data should be intact');
+});
+
 // Print summary
 console.log('\n' + '='.repeat(50));
 console.log(`Tests passed: ${passed}`);
