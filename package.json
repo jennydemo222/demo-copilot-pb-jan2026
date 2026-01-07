@@ -1,14 +1,16 @@
 {
   "name": "demo-copilot-pb-jan2026",
   "version": "1.0.0",
-  "description": "Demo project with login functionality",
+  "description": "Demo project with login functionality and event API",
   "main": "login.js",
   "scripts": {
-    "test": "node test.js"
+    "test": "node test.js && node event.test.js"
   },
   "keywords": [
     "login",
-    "authentication"
+    "authentication",
+    "events",
+    "api"
   ],
   "author": "",
   "license": "ISC"
