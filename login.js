@@ -40,6 +40,21 @@ function login(username, password) {
       };
     }
 
+    // Validate input length BEFORE trimming to prevent DOS attacks with large strings
+    if (username.length > 255) {
+      return {
+        success: false,
+        error: 'Username is too long (maximum 255 characters)'
+      };
+    }
+
+    if (password.length > 255) {
+      return {
+        success: false,
+        error: 'Password is too long (maximum 255 characters)'
+      };
+    }
+
     // Trim whitespace from inputs
     username = username.trim();
     password = password.trim();
@@ -56,21 +71,6 @@ function login(username, password) {
       return {
         success: false,
         error: 'Password cannot be empty'
-      };
-    }
-
-    // Validate input length to prevent potential buffer overflow or DOS attacks
-    if (username.length > 255) {
-      return {
-        success: false,
-        error: 'Username is too long (maximum 255 characters)'
-      };
-    }
-
-    if (password.length > 255) {
-      return {
-        success: false,
-        error: 'Password is too long (maximum 255 characters)'
       };
     }
 
