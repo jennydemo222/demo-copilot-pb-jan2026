@@ -40,12 +40,12 @@ function createEvent(type, message, metadata = {}) {
     };
   }
 
-  // Create the event
+  // Create the event with deep clone of metadata to prevent mutations
   const event = {
     id: eventIdCounter++,
     type: type.trim(),
     message: message.trim(),
-    metadata: { ...metadata },
+    metadata: JSON.parse(JSON.stringify(metadata)),
     timestamp: new Date().toISOString()
   };
 
@@ -80,7 +80,7 @@ function getEvents(type = null) {
 
   return {
     success: true,
-    events: [...filteredEvents],
+    events: JSON.parse(JSON.stringify(filteredEvents)),
     count: filteredEvents.length
   };
 }
@@ -109,7 +109,7 @@ function getEventById(id) {
 
   return {
     success: true,
-    event: { ...event }
+    event: JSON.parse(JSON.stringify(event))
   };
 }
 
