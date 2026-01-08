@@ -3,6 +3,8 @@
  * Validates user credentials and returns authentication result
  */
 
+const crypto = require('crypto');
+
 /**
  * Simulated user database for demonstration purposes
  * In a real application, this would be replaced with actual database queries
@@ -128,10 +130,10 @@ function login(username, password) {
  */
 function guestLogin() {
   try {
-    // Generate unique guest username using timestamp and random number
+    // Generate unique guest username using timestamp and cryptographically secure random bytes
     const timestamp = Date.now();
-    const randomNum = Math.floor(Math.random() * 10000);
-    const guestUsername = `guest_${timestamp}_${randomNum}`;
+    const randomBytes = crypto.randomBytes(4).toString('hex');
+    const guestUsername = `guest_${timestamp}_${randomBytes}`;
 
     // Successful guest login
     return {
