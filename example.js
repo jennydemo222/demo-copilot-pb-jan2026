@@ -2,7 +2,7 @@
  * Example usage of the login function and event API
  */
 
-const { login } = require('./login');
+const { login, guestLogin } = require('./login');
 const { createEvent, getEvents, getEventById, getEventCount } = require('./event');
 
 console.log('=== Login Function Examples ===\n');
@@ -73,6 +73,31 @@ console.log('=== Available test users ===');
 console.log('- username: admin, password: admin123, role: administrator');
 console.log('- username: user, password: user123, role: user');
 console.log('- username: demo, password: demo123, role: user');
+console.log();
+
+console.log('=== Guest Login Examples ===\n');
+
+// Example 6: Guest login
+console.log('Example 6: Guest login without credentials');
+const result6 = guestLogin();
+console.log(result6);
+
+// Log the guest login as an event
+if (result6.success) {
+  createEvent('guest_login', 'Guest user logged in', {
+    username: result6.user.username,
+    role: result6.user.role
+  });
+}
+console.log();
+
+// Example 7: Multiple guest logins
+console.log('Example 7: Multiple guest logins (demonstrating unique usernames)');
+const guest1 = guestLogin();
+const guest2 = guestLogin();
+console.log('Guest 1:', guest1.user.username);
+console.log('Guest 2:', guest2.user.username);
+console.log('Usernames are unique:', guest1.user.username !== guest2.user.username);
 console.log();
 
 console.log('=== Event API Examples ===\n');

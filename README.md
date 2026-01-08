@@ -5,6 +5,7 @@ A simple login function implementation in Node.js with an Event API for logging 
 ## Features
 
 - User authentication with username and password
+- **Guest login flow** for quick access without credentials
 - Comprehensive input validation
 - Enhanced error handling with try-catch blocks
 - Protection against common security issues (input length validation, special character filtering)
@@ -21,7 +22,7 @@ No external dependencies required. Just Node.js.
 ### Login API
 
 ```javascript
-const { login } = require('./login');
+const { login, guestLogin } = require('./login');
 
 // Attempt to login with credentials
 const result = login('admin', 'admin123');
@@ -32,6 +33,15 @@ if (result.success) {
   console.log('Role:', result.user.role);
 } else {
   console.log('Login failed:', result.error);
+}
+
+// Login as a guest without credentials
+const guestResult = guestLogin();
+
+if (guestResult.success) {
+  console.log('Guest login successful!');
+  console.log('User:', guestResult.user.username);
+  console.log('Role:', guestResult.user.role);
 }
 ```
 
@@ -98,6 +108,24 @@ The login function includes comprehensive error handling for:
 - Username containing invalid characters (only letters, numbers, dots, hyphens, and underscores are allowed)
 - Invalid credentials (user not found or incorrect password)
 - Unexpected runtime errors (caught and returned safely)
+
+#### `guestLogin()`
+
+Authenticates a guest user without requiring credentials. Generates a unique guest username automatically.
+
+**Parameters:**
+- None
+
+**Returns:**
+- Object with the following structure:
+  - On success: `{ success: true, user: { username, role }, message: 'Guest login successful' }`
+  - On failure: `{ success: false, error: 'Error message' }`
+
+**Features:**
+- No credentials required
+- Automatically generates unique guest username (format: `guest_<timestamp>_<random>`)
+- Assigns 'guest' role to user
+- Consistent response structure with regular login
 
 ### Event API
 

@@ -3,6 +3,8 @@
  * Validates user credentials and returns authentication result
  */
 
+const crypto = require('crypto');
+
 /**
  * Simulated user database for demonstration purposes
  * In a real application, this would be replaced with actual database queries
@@ -121,4 +123,35 @@ function login(username, password) {
   }
 }
 
-module.exports = { login };
+/**
+ * Guest login function to authenticate guest users without credentials
+ * Generates a unique guest username and assigns guest role
+ * @returns {Object} Authentication result with success status and guest user info
+ */
+function guestLogin() {
+  try {
+    // Generate unique guest username using timestamp and cryptographically secure random bytes
+    const timestamp = Date.now();
+    const randomBytes = crypto.randomBytes(4).toString('hex');
+    const guestUsername = `guest_${timestamp}_${randomBytes}`;
+
+    // Successful guest login
+    return {
+      success: true,
+      user: {
+        username: guestUsername,
+        role: 'guest'
+      },
+      message: 'Guest login successful'
+    };
+  } catch (error) {
+    // Catch any unexpected errors and return a safe error message
+    console.error('Guest login error:', error);
+    return {
+      success: false,
+      error: 'An unexpected error occurred during guest login. Please try again.'
+    };
+  }
+}
+
+module.exports = { login, guestLogin };
