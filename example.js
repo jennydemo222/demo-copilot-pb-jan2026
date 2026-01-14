@@ -3,7 +3,16 @@
  */
 
 const { login } = require('./login');
-const { createEvent, getEvents, getEventById, getEventCount } = require('./event');
+const { 
+  createEvent, 
+  getEvents, 
+  getEventById, 
+  getEventCount,
+  createAuditEvent,
+  getAuditEvents,
+  getAuditEventCount,
+  AUDIT_EVENT_TYPES
+} = require('./event');
 
 console.log('=== Login Function Examples ===\n');
 
@@ -113,4 +122,70 @@ console.log(`Total events: ${countResult.count}`);
 
 const loginCountResult = getEventCount('login');
 console.log(`Login events: ${loginCountResult.count}`);
+console.log();
+
+console.log('=== Audit Event API Examples ===\n');
+
+// Example 1: View all audit events created by login attempts
+console.log('Example 1: Viewing audit events from login attempts');
+const allAuditEvents = getAuditEvents();
+console.log(`Total audit events: ${allAuditEvents.count}`);
+console.log('Audit events:');
+allAuditEvents.events.forEach(event => {
+  console.log(`  - [${event.metadata.severity.toUpperCase()}] ${event.type}: ${event.message}`);
+  console.log(`    Username: ${event.metadata.username || 'N/A'}, Source: ${event.metadata.source}`);
+});
+console.log();
+
+// Example 2: Get successful login audit events
+console.log('Example 2: Getting successful login audit events');
+const successAudits = getAuditEvents(AUDIT_EVENT_TYPES.LOGIN_SUCCESS);
+console.log(`Successful login audit events: ${successAudits.count}`);
+console.log(successAudits);
+console.log();
+
+// Example 3: Get failed login audit events
+console.log('Example 3: Getting failed login audit events');
+const failureAudits = getAuditEvents(AUDIT_EVENT_TYPES.LOGIN_FAILURE);
+console.log(`Failed login audit events: ${failureAudits.count}`);
+console.log(failureAudits);
+console.log();
+
+// Example 4: Create custom audit event
+console.log('Example 4: Creating custom audit event');
+const customAudit = createAuditEvent(
+  AUDIT_EVENT_TYPES.DATA_ACCESS,
+  'User accessed sensitive data',
+  {
+    username: 'admin',
+    resource: '/api/users/data',
+    ipAddress: '192.168.1.100',
+    severity: 'warning'
+  }
+);
+console.log(customAudit);
+console.log();
+
+// Example 5: Get audit event count
+console.log('Example 5: Getting audit event counts');
+const totalAuditCount = getAuditEventCount();
+console.log(`Total audit events: ${totalAuditCount.count}`);
+
+const loginSuccessCount = getAuditEventCount(AUDIT_EVENT_TYPES.LOGIN_SUCCESS);
+console.log(`Login success audit events: ${loginSuccessCount.count}`);
+console.log();
+
+// Example 6: Demonstrate suspicious activity detection
+console.log('Example 6: Demonstrating suspicious activity detection');
+const suspiciousLogin = login('admin@#$', 'test'); // Invalid characters
+const suspiciousAudits = getAuditEvents(AUDIT_EVENT_TYPES.SUSPICIOUS_ACTIVITY);
+console.log(`Suspicious activity events: ${suspiciousAudits.count}`);
+if (suspiciousAudits.count > 0) {
+  console.log('Last suspicious activity:');
+  const lastSuspicious = suspiciousAudits.events[suspiciousAudits.events.length - 1];
+  console.log(`  Type: ${lastSuspicious.type}`);
+  console.log(`  Message: ${lastSuspicious.message}`);
+  console.log(`  Reason: ${lastSuspicious.metadata.reason}`);
+  console.log(`  Severity: ${lastSuspicious.metadata.severity}`);
+}
 console.log();
