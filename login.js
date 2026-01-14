@@ -1,7 +1,10 @@
 /**
  * Login Function
  * Validates user credentials and returns authentication result
+ * Includes audit logging for security tracking
  */
+
+const { createAuditEvent, AUDIT_EVENT_TYPES } = require('./event');
 
 /**
  * Simulated user database for demonstration purposes
@@ -25,8 +28,20 @@ const users = [
  */
 function login(username, password) {
   try {
+    // Log login attempt
+    const attemptMetadata = {
+      username: username || 'undefined',
+      severity: 'info',
+      source: 'login'
+    };
+
     // Validate input parameters exist and are of correct type
     if (username === undefined || username === null || typeof username !== 'string') {
+      createAuditEvent(
+        AUDIT_EVENT_TYPES.LOGIN_FAILURE,
+        'Login failed: Invalid username type',
+        { ...attemptMetadata, reason: 'invalid_username_type' }
+      );
       return {
         success: false,
         error: 'Username is required and must be a string'
@@ -34,6 +49,11 @@ function login(username, password) {
     }
 
     if (password === undefined || password === null || typeof password !== 'string') {
+      createAuditEvent(
+        AUDIT_EVENT_TYPES.LOGIN_FAILURE,
+        'Login failed: Invalid password type',
+        { ...attemptMetadata, reason: 'invalid_password_type' }
+      );
       return {
         success: false,
         error: 'Password is required and must be a string'
@@ -42,6 +62,11 @@ function login(username, password) {
 
     // Validate input length BEFORE trimming to prevent DOS attacks with large strings
     if (username.length > 255) {
+      createAuditEvent(
+        AUDIT_EVENT_TYPES.SUSPICIOUS_ACTIVITY,
+        'Suspicious activity: Username exceeds maximum length',
+        { ...attemptMetadata, reason: 'username_too_long', length: username.length, severity: 'warning' }
+      );
       return {
         success: false,
         error: 'Username is too long (maximum 255 characters)'
@@ -49,6 +74,11 @@ function login(username, password) {
     }
 
     if (password.length > 255) {
+      createAuditEvent(
+        AUDIT_EVENT_TYPES.SUSPICIOUS_ACTIVITY,
+        'Suspicious activity: Password exceeds maximum length',
+        { ...attemptMetadata, reason: 'password_too_long', length: password.length, severity: 'warning' }
+      );
       return {
         success: false,
         error: 'Password is too long (maximum 255 characters)'
@@ -59,8 +89,16 @@ function login(username, password) {
     username = username.trim();
     password = password.trim();
 
+    // Update metadata with trimmed username
+    attemptMetadata.username = username;
+
     // Check if username and password are not empty after trimming
     if (username.length === 0) {
+      createAuditEvent(
+        AUDIT_EVENT_TYPES.LOGIN_FAILURE,
+        'Login failed: Empty username',
+        { ...attemptMetadata, reason: 'empty_username' }
+      );
       return {
         success: false,
         error: 'Username cannot be empty'
@@ -68,6 +106,11 @@ function login(username, password) {
     }
 
     if (password.length === 0) {
+      createAuditEvent(
+        AUDIT_EVENT_TYPES.LOGIN_FAILURE,
+        'Login failed: Empty password',
+        { ...attemptMetadata, reason: 'empty_password' }
+      );
       return {
         success: false,
         error: 'Password cannot be empty'
@@ -77,16 +120,33 @@ function login(username, password) {
     // Validate username format - only allow alphanumeric, underscore, hyphen, and dot
     const usernamePattern = /^[a-zA-Z0-9._-]+$/;
     if (!usernamePattern.test(username)) {
+      createAuditEvent(
+        AUDIT_EVENT_TYPES.SUSPICIOUS_ACTIVITY,
+        'Suspicious activity: Username contains invalid characters',
+        { ...attemptMetadata, reason: 'invalid_characters', severity: 'warning' }
+      );
       return {
         success: false,
         error: 'Username contains invalid characters (only letters, numbers, dots, hyphens, and underscores allowed)'
       };
     }
 
+    // Log the actual login attempt
+    createAuditEvent(
+      AUDIT_EVENT_TYPES.LOGIN_ATTEMPT,
+      'User login attempt',
+      attemptMetadata
+    );
+
     // Find user in the database
     const user = users.find(u => u.username === username);
 
     if (!user) {
+      createAuditEvent(
+        AUDIT_EVENT_TYPES.LOGIN_FAILURE,
+        'Login failed: User not found',
+        { ...attemptMetadata, reason: 'user_not_found', severity: 'warning' }
+      );
       return {
         success: false,
         error: 'Invalid username or password'
@@ -95,13 +155,29 @@ function login(username, password) {
 
     // Verify password
     if (user.password !== password) {
+      createAuditEvent(
+        AUDIT_EVENT_TYPES.LOGIN_FAILURE,
+        'Login failed: Incorrect password',
+        { ...attemptMetadata, reason: 'incorrect_password', severity: 'warning' }
+      );
       return {
         success: false,
         error: 'Invalid username or password'
       };
     }
 
-    // Successful login
+    // Successful login - log audit event
+    createAuditEvent(
+      AUDIT_EVENT_TYPES.LOGIN_SUCCESS,
+      'User logged in successfully',
+      {
+        username: user.username,
+        role: user.role,
+        severity: 'info',
+        source: 'login'
+      }
+    );
+
     return {
       success: true,
       user: {
@@ -114,6 +190,17 @@ function login(username, password) {
     // Catch any unexpected errors and return a safe error message
     // In production, you should log the actual error for debugging
     console.error('Login error:', error);
+    createAuditEvent(
+      AUDIT_EVENT_TYPES.SUSPICIOUS_ACTIVITY,
+      'Unexpected error during login',
+      {
+        username: username || 'unknown',
+        reason: 'unexpected_error',
+        error: error.message,
+        severity: 'error',
+        source: 'login'
+      }
+    );
     return {
       success: false,
       error: 'An unexpected error occurred during login. Please try again.'

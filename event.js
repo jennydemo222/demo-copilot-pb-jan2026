@@ -1,7 +1,31 @@
 /**
  * Event API Module
  * Provides functionality to create, store, and retrieve events
+ * Includes audit event functionality for security tracking
  */
+
+/**
+ * Audit event type constants for security logging
+ */
+const AUDIT_EVENT_TYPES = {
+  LOGIN_SUCCESS: 'audit.login.success',
+  LOGIN_FAILURE: 'audit.login.failure',
+  LOGIN_ATTEMPT: 'audit.login.attempt',
+  LOGOUT: 'audit.logout',
+  ACCESS_DENIED: 'audit.access.denied',
+  PERMISSION_CHANGED: 'audit.permission.changed',
+  USER_CREATED: 'audit.user.created',
+  USER_DELETED: 'audit.user.deleted',
+  USER_MODIFIED: 'audit.user.modified',
+  PASSWORD_CHANGED: 'audit.password.changed',
+  PASSWORD_RESET: 'audit.password.reset',
+  SESSION_CREATED: 'audit.session.created',
+  SESSION_EXPIRED: 'audit.session.expired',
+  SUSPICIOUS_ACTIVITY: 'audit.security.suspicious',
+  DATA_ACCESS: 'audit.data.access',
+  DATA_MODIFIED: 'audit.data.modified',
+  DATA_DELETED: 'audit.data.deleted'
+};
 
 /**
  * In-memory event storage for demonstration purposes
@@ -157,10 +181,129 @@ function getEventCount(type = null) {
   };
 }
 
+/**
+ * Creates an audit event for security tracking
+ * @param {string} type - The audit event type (use AUDIT_EVENT_TYPES constants)
+ * @param {string} message - Description of the audit event
+ * @param {Object} metadata - Additional audit metadata (e.g., username, ip, action)
+ * @returns {Object} Created audit event object with success status
+ */
+function createAuditEvent(type, message, metadata = {}) {
+  // Enrich metadata with audit-specific fields
+  const auditMetadata = {
+    ...metadata,
+    severity: metadata.severity || 'info',
+    source: metadata.source || 'system',
+    auditTimestamp: new Date().toISOString()
+  };
+
+  return createEvent(type, message, auditMetadata);
+}
+
+/**
+ * Gets all audit events (events with type starting with 'audit.')
+ * @param {string} auditType - Optional filter by specific audit type
+ * @returns {Object} Array of audit events with success status
+ */
+function getAuditEvents(auditType = null) {
+  let filteredEvents;
+  
+  if (auditType !== null) {
+    if (typeof auditType !== 'string' || auditType.trim().length === 0) {
+      return {
+        success: false,
+        error: 'Audit type must be a non-empty string when provided'
+      };
+    }
+    // Filter by specific audit type
+    filteredEvents = events.filter(e => e.type === auditType.trim());
+  } else {
+    // Get all audit events (those starting with 'audit.')
+    filteredEvents = events.filter(e => e.type.startsWith('audit.'));
+  }
+
+  return {
+    success: true,
+    events: [...filteredEvents],
+    count: filteredEvents.length
+  };
+}
+
+/**
+ * Gets count of audit events
+ * @param {string} auditType - Optional filter by specific audit type
+ * @returns {Object} Count with success status
+ */
+function getAuditEventCount(auditType = null) {
+  const result = getAuditEvents(auditType);
+  if (!result.success) {
+    return result;
+  }
+  
+  return {
+    success: true,
+    count: result.count,
+    ...(auditType && { type: auditType.trim() })
+  };
+}
+
+/**
+ * Gets audit events within a specific time range
+ * @param {Date|string} startTime - Start time for filtering (ISO string or Date object)
+ * @param {Date|string} endTime - End time for filtering (ISO string or Date object)
+ * @returns {Object} Array of audit events within time range
+ */
+function getAuditEventsByTimeRange(startTime, endTime) {
+  try {
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return {
+        success: false,
+        error: 'Invalid time range provided'
+      };
+    }
+
+    if (start > end) {
+      return {
+        success: false,
+        error: 'Start time must be before end time'
+      };
+    }
+
+    const auditEvents = events.filter(e => e.type.startsWith('audit.'));
+    const filteredEvents = auditEvents.filter(e => {
+      const eventTime = new Date(e.timestamp);
+      return eventTime >= start && eventTime <= end;
+    });
+
+    return {
+      success: true,
+      events: [...filteredEvents],
+      count: filteredEvents.length,
+      timeRange: {
+        start: start.toISOString(),
+        end: end.toISOString()
+      }
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Error processing time range query'
+    };
+  }
+}
+
 module.exports = {
   createEvent,
   getEvents,
   getEventById,
   clearEvents,
-  getEventCount
+  getEventCount,
+  AUDIT_EVENT_TYPES,
+  createAuditEvent,
+  getAuditEvents,
+  getAuditEventCount,
+  getAuditEventsByTimeRange
 };
