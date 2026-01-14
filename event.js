@@ -45,7 +45,7 @@ function createEvent(type, message, metadata = {}) {
     id: eventIdCounter++,
     type: type.trim(),
     message: message.trim(),
-    metadata: { ...metadata },
+    metadata: JSON.parse(JSON.stringify(metadata)),
     timestamp: new Date().toISOString()
   };
 
@@ -54,7 +54,7 @@ function createEvent(type, message, metadata = {}) {
 
   return {
     success: true,
-    event: event,
+    event: JSON.parse(JSON.stringify(event)),
     message: 'Event created successfully'
   };
 }
@@ -80,7 +80,7 @@ function getEvents(type = null) {
 
   return {
     success: true,
-    events: [...filteredEvents],
+    events: JSON.parse(JSON.stringify(filteredEvents)),
     count: filteredEvents.length
   };
 }
@@ -109,7 +109,7 @@ function getEventById(id) {
 
   return {
     success: true,
-    event: { ...event }
+    event: JSON.parse(JSON.stringify(event))
   };
 }
 
@@ -199,9 +199,9 @@ function trackPollEngagement(payload) {
     };
   }
 
-  // Create properly structured event to prevent memory leaks
-  // Using Object.freeze on nested objects to ensure immutability
-  const engagementData = Object.freeze({
+  // Create properly structured event data to prevent memory leaks
+  // Using JSON deep cloning ensures complete immutability
+  const engagementData = {
     event_type: payload.event_type.trim(),
     poll_id: payload.poll_id.trim(),
     user_id: payload.user_id.trim(),
@@ -209,7 +209,7 @@ function trackPollEngagement(payload) {
     new_choice: payload.new_choice.trim(),
     timestamp: payload.timestamp.trim(),
     session_id: payload.session_id ? payload.session_id.trim() : null
-  });
+  };
 
   // Use the existing createEvent function with properly structured data
   const result = createEvent(
@@ -264,7 +264,7 @@ function getPollEngagementEvents(filters = {}) {
 
   return {
     success: true,
-    events: filteredEvents.map(e => ({ ...e })),
+    events: JSON.parse(JSON.stringify(filteredEvents)),
     count: filteredEvents.length
   };
 }
