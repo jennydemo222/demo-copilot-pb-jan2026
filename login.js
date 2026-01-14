@@ -30,7 +30,7 @@ function login(username, password) {
   try {
     // Log login attempt
     const attemptMetadata = {
-      username: username || 'undefined',
+      username: (typeof username === 'string' && username.length > 0) ? username : 'unknown',
       severity: 'info',
       source: 'login'
     };
