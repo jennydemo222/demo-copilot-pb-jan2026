@@ -11,6 +11,7 @@ A simple login function implementation in Node.js with an Event API for logging 
 - Role-based user information
 - **Event API** for creating and retrieving events
 - Event filtering and counting capabilities
+- **Poll Engagement Tracking** with memory leak prevention and granular analytics
 
 ## Installation
 
@@ -63,6 +64,53 @@ console.log(`Total events: ${count.count}`);
 // Get event count by type
 const loginCount = getEventCount('login');
 console.log(`Login events: ${loginCount.count}`);
+```
+
+### Poll Engagement Tracking API
+
+```javascript
+const { trackPollEngagement, getPollEngagementEvents } = require('./event');
+
+// Track a user voting on a poll
+const voteResult = trackPollEngagement({
+  event_type: 'vote_cast',
+  poll_id: '12345',
+  user_id: 'user_abc',
+  new_choice: 'option_1',
+  timestamp: '2024-01-15T14:30:00Z',
+  session_id: 'session_xyz'  // Optional: for behavioral analytics
+});
+
+// Track a user changing their vote
+const changeResult = trackPollEngagement({
+  event_type: 'vote_changed',
+  poll_id: '12345',
+  user_id: 'user_abc',
+  previous_choice: 'option_1',
+  new_choice: 'option_2',
+  timestamp: '2024-01-15T14:31:00Z',
+  session_id: 'session_xyz'
+});
+
+// Get all poll engagement events
+const allEngagement = getPollEngagementEvents();
+console.log(`Total engagement events: ${allEngagement.count}`);
+
+// Filter by poll ID
+const pollEvents = getPollEngagementEvents({ poll_id: '12345' });
+
+// Filter by user ID
+const userEvents = getPollEngagementEvents({ user_id: 'user_abc' });
+
+// Filter by event type
+const voteChanges = getPollEngagementEvents({ event_type: 'vote_changed' });
+
+// Filter with multiple criteria
+const specificEvents = getPollEngagementEvents({
+  poll_id: '12345',
+  user_id: 'user_abc',
+  event_type: 'vote_changed'
+});
 ```
 
 ## Test Users
@@ -159,27 +207,94 @@ Clears all events from storage (useful for testing).
 - Object with the following structure:
   - `{ success: true, message: 'Cleared N event(s)', count: number }`
 
+### Poll Engagement Tracking API
+
+#### `trackPollEngagement(payload)`
+
+Tracks poll engagement events with granular data. Prevents memory leaks through proper event structuring and immutability.
+
+**Parameters:**
+- `payload` (object): The poll engagement payload with the following fields:
+  - `event_type` (string, required): Type of engagement (e.g., 'vote_cast', 'vote_changed', 'vote_removed')
+  - `poll_id` (string, required): Unique identifier for the poll
+  - `user_id` (string, required): User identifier
+  - `new_choice` (string, required): New choice selected
+  - `timestamp` (string, required): ISO 8601 timestamp of the event
+  - `previous_choice` (string, optional): Previous choice (for vote changes)
+  - `session_id` (string, optional): Session identifier for behavioral analytics
+
+**Returns:**
+- Object with the following structure:
+  - On success: `{ success: true, event: { id, type, message, metadata, timestamp }, message: 'Poll engagement tracked successfully' }`
+  - On failure: `{ success: false, error: 'Error message' }`
+
+**Example:**
+```javascript
+const result = trackPollEngagement({
+  event_type: 'vote_changed',
+  poll_id: '12345',
+  user_id: 'user_abc',
+  previous_choice: 'option_1',
+  new_choice: 'option_2',
+  timestamp: '2024-01-15T14:30:00Z',
+  session_id: 'session_xyz'
+});
+```
+
+#### `getPollEngagementEvents(filters)`
+
+Retrieves poll engagement events with optional filtering.
+
+**Parameters:**
+- `filters` (object, optional): Optional filters with the following fields:
+  - `poll_id` (string): Filter by poll ID
+  - `user_id` (string): Filter by user ID
+  - `event_type` (string): Filter by engagement type
+
+**Returns:**
+- Object with the following structure:
+  - `{ success: true, events: [...], count: number }`
+
+**Example:**
+```javascript
+// Get all events for a specific poll
+const pollEvents = getPollEngagementEvents({ poll_id: '12345' });
+
+// Get all events for a specific user
+const userEvents = getPollEngagementEvents({ user_id: 'user_abc' });
+
+// Combine multiple filters
+const specificEvents = getPollEngagementEvents({
+  poll_id: '12345',
+  user_id: 'user_abc',
+  event_type: 'vote_changed'
+});
+```
+
 ## Examples
 
-Run the example file to see the login function and event API in action:
+Run the example files to see the APIs in action:
 
 ```bash
-node example.js
+node example.js                    # Login and event API examples
+node poll-engagement-example.js    # Poll engagement tracking examples
 ```
 
 ## Testing
 
-Run the test suite for both login and event APIs:
+Run the test suite for all APIs:
 
 ```bash
-npm test
+npm test                        # Login and event API tests
+node poll-engagement.test.js    # Poll engagement tracking tests
 ```
 
 Or run tests individually:
 
 ```bash
-node test.js        # Login tests
-node event.test.js  # Event API tests
+node test.js                # Login tests
+node event.test.js          # Event API tests
+node poll-engagement.test.js # Poll engagement tests
 ```
 
 ## Security Note
