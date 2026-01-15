@@ -4,7 +4,7 @@
   "description": "Demo project with login functionality and event API",
   "main": "login.js",
   "scripts": {
-    "test": "node test.js && node event.test.js"
+    "test": "node test.js && node event.test.js && node guest-login.test.js"
   },
   "keywords": [
     "login",
