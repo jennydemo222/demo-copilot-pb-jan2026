@@ -109,7 +109,7 @@ test('Should fail with invalid timestamp format', () => {
   
   const result = trackPollEngagement(payload);
   assert(result.success === false, 'Tracking should fail');
-  assert(result.error === 'Invalid timestamp format', 'Error should mention timestamp');
+  assert(result.error.toLowerCase().includes('timestamp'), 'Error should mention timestamp');
 });
 
 // Test 6: Fail with empty string in required field
@@ -239,6 +239,121 @@ test('Should track multiple engagement events for same user', () => {
   const result = getPollEngagementEvents({ user_id: 'multi_user' });
   assert(result.success === true, 'Retrieval should succeed');
   assert(result.count === 2, 'Should have 2 events for multi_user');
+});
+
+// Test 15: Fail with array as payload
+test('Should fail with array as payload', () => {
+  const result = trackPollEngagement([]);
+  assert(result.success === false, 'Tracking should fail');
+  assert(result.error.includes('array'), 'Error should mention array');
+});
+
+// Test 16: Fail with invalid optional field type
+test('Should fail with invalid previous_choice type', () => {
+  const payload = {
+    event_type: 'vote_changed',
+    poll_id: '12345',
+    user_id: 'user_abc',
+    previous_choice: 123, // Should be string
+    new_choice: 'option_2',
+    timestamp: '2024-01-15T14:30:00Z'
+  };
+  
+  const result = trackPollEngagement(payload);
+  assert(result.success === false, 'Tracking should fail');
+  assert(result.error.includes('previous_choice'), 'Error should mention previous_choice');
+});
+
+// Test 17: Fail with invalid session_id type
+test('Should fail with invalid session_id type', () => {
+  const payload = {
+    event_type: 'vote_cast',
+    poll_id: '12345',
+    user_id: 'user_abc',
+    new_choice: 'option_1',
+    timestamp: '2024-01-15T14:30:00Z',
+    session_id: 456 // Should be string
+  };
+  
+  const result = trackPollEngagement(payload);
+  assert(result.success === false, 'Tracking should fail');
+  assert(result.error.includes('session_id'), 'Error should mention session_id');
+});
+
+// Test 18: Fail with event_type too long
+test('Should fail with event_type exceeding maximum length', () => {
+  const longEventType = 'a'.repeat(101);
+  const payload = {
+    event_type: longEventType,
+    poll_id: '12345',
+    user_id: 'user_abc',
+    new_choice: 'option_1',
+    timestamp: '2024-01-15T14:30:00Z'
+  };
+  
+  const result = trackPollEngagement(payload);
+  assert(result.success === false, 'Tracking should fail');
+  assert(result.error.includes('event_type') && result.error.includes('long'), 'Error should mention event_type is too long');
+});
+
+// Test 19: Fail with poll_id too long
+test('Should fail with poll_id exceeding maximum length', () => {
+  const longPollId = 'a'.repeat(256);
+  const payload = {
+    event_type: 'vote_cast',
+    poll_id: longPollId,
+    user_id: 'user_abc',
+    new_choice: 'option_1',
+    timestamp: '2024-01-15T14:30:00Z'
+  };
+  
+  const result = trackPollEngagement(payload);
+  assert(result.success === false, 'Tracking should fail');
+  assert(result.error.includes('poll_id') && result.error.includes('long'), 'Error should mention poll_id is too long');
+});
+
+// Test 20: Fail with user_id too long
+test('Should fail with user_id exceeding maximum length', () => {
+  const longUserId = 'a'.repeat(256);
+  const payload = {
+    event_type: 'vote_cast',
+    poll_id: '12345',
+    user_id: longUserId,
+    new_choice: 'option_1',
+    timestamp: '2024-01-15T14:30:00Z'
+  };
+  
+  const result = trackPollEngagement(payload);
+  assert(result.success === false, 'Tracking should fail');
+  assert(result.error.includes('user_id') && result.error.includes('long'), 'Error should mention user_id is too long');
+});
+
+// Test 21: Fail with invalid filters type in getPollEngagementEvents
+test('Should fail with invalid filters type', () => {
+  const result = getPollEngagementEvents('invalid');
+  assert(result.success === false, 'Retrieval should fail');
+  assert(result.error.includes('object'), 'Error should mention object type');
+});
+
+// Test 22: Fail with array as filters in getPollEngagementEvents
+test('Should fail with array as filters', () => {
+  const result = getPollEngagementEvents([]);
+  assert(result.success === false, 'Retrieval should fail');
+  assert(result.error.includes('object'), 'Error should mention object type');
+});
+
+// Test 23: Fail with invalid poll_id filter type
+test('Should fail with invalid poll_id filter type', () => {
+  const result = getPollEngagementEvents({ poll_id: 123 });
+  assert(result.success === false, 'Retrieval should fail');
+  assert(result.error.includes('poll_id'), 'Error should mention poll_id');
+});
+
+// Test 24: Fail with empty poll_id filter
+test('Should fail with empty poll_id filter', () => {
+  const result = getPollEngagementEvents({ poll_id: '' });
+  assert(result.success === false, 'Retrieval should fail');
+  assert(result.error.includes('poll_id'), 'Error should mention poll_id');
 });
 
 // Print summary

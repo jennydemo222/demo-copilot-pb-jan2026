@@ -199,6 +199,29 @@ test('Should fail with array as metadata', () => {
   assert(result.error, 'Should have error message');
 });
 
+// Test 21: Fail with circular reference in metadata
+test('Should fail with circular reference in metadata', () => {
+  const circularObj = { name: 'test' };
+  circularObj.self = circularObj; // Create circular reference
+  
+  const result = createEvent('test', 'Test with circular ref', circularObj);
+  assert(result.success === false, 'Event creation should fail');
+  assert(result.error.includes('circular') || result.error.includes('serializable'), 'Error should mention serialization issue');
+});
+
+// Test 22: Handle function in metadata gracefully
+test('Should silently remove function from metadata', () => {
+  const metadataWithFunc = { 
+    name: 'test',
+    func: function() { return 'test'; }
+  };
+  
+  const result = createEvent('test', 'Test with function', metadataWithFunc);
+  assert(result.success === true, 'Event creation should succeed');
+  assert(result.event.metadata.name === 'test', 'Should keep regular properties');
+  assert(result.event.metadata.func === undefined, 'Function should be removed');
+});
+
 // Print summary
 console.log('\n' + '='.repeat(50));
 console.log(`Tests passed: ${passed}`);
