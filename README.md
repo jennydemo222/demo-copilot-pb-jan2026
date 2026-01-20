@@ -13,6 +13,7 @@ A simple login function implementation in Node.js with an Event API for logging 
 - **Event API** for creating and retrieving events
 - Event filtering and counting capabilities
 - **Poll Engagement Tracking** with memory leak prevention and granular analytics
+- **Gamma Line Integration** - Order Management API for tracking orders, fulfillment, and cancellations
 
 ## Installation
 
@@ -121,6 +122,55 @@ const specificEvents = getPollEngagementEvents({
   user_id: 'user_abc',
   event_type: 'vote_changed'
 });
+```
+
+### Order Management API (Gamma Line Integration)
+
+```javascript
+const {
+  createOrder,
+  updateOrderStatus,
+  cancelOrder,
+  fulfillOrder,
+  getOrderEvents
+} = require('./order-management');
+
+// Create a new order
+const order = createOrder({
+  order_id: 'ORD-12345',
+  customer_id: 'CUST-789',
+  items: [
+    { product_id: 'PROD-1', quantity: 2, price: 29.99 },
+    { product_id: 'PROD-2', quantity: 1, price: 49.99 }
+  ],
+  total_amount: 109.97
+});
+
+// Update order status
+const update = updateOrderStatus('ORD-12345', 'processing', {
+  warehouse_location: 'Warehouse-B'
+});
+
+// Fulfill an order
+const fulfillment = fulfillOrder('ORD-12345', {
+  tracking_number: 'TRACK-123',
+  carrier: 'UPS'
+});
+
+// Cancel an order
+const cancellation = cancelOrder('ORD-12345', 'Customer requested');
+
+// Get all order events
+const allOrders = getOrderEvents();
+
+// Filter by order ID
+const orderEvents = getOrderEvents({ order_id: 'ORD-12345' });
+
+// Filter by customer
+const customerOrders = getOrderEvents({ customer_id: 'CUST-789' });
+
+// Filter by status
+const processingOrders = getOrderEvents({ status: 'processing' });
 ```
 
 ## Test Users
@@ -299,6 +349,128 @@ const specificEvents = getPollEngagementEvents({
 });
 ```
 
+### Order Management API (Gamma Line Integration)
+
+#### `createOrder(orderData)`
+
+Creates a new order and tracks the event.
+
+**Parameters:**
+- `orderData` (object): The order information with the following fields:
+  - `order_id` (string, required): Unique order identifier
+  - `customer_id` (string, required): Customer identifier
+  - `items` (array, required): Array of order items (must be non-empty)
+  - `total_amount` (number, required): Total order amount (must be non-negative)
+  - `status` (string, optional): Order status - one of: 'pending' (default), 'processing', 'fulfilled', 'cancelled'
+
+**Returns:**
+- Object with the following structure:
+  - On success: `{ success: true, order: { id, type, message, metadata, timestamp }, message: 'Order created successfully' }`
+  - On failure: `{ success: false, error: 'Error message' }`
+
+**Example:**
+```javascript
+const order = createOrder({
+  order_id: 'ORD-12345',
+  customer_id: 'CUST-789',
+  items: [
+    { product_id: 'PROD-1', quantity: 2, price: 29.99 }
+  ],
+  total_amount: 59.98
+});
+```
+
+#### `updateOrderStatus(orderId, newStatus, additionalData)`
+
+Updates an existing order status.
+
+**Parameters:**
+- `orderId` (string, required): The order ID to update
+- `newStatus` (string, required): New status - one of: 'pending', 'processing', 'fulfilled', 'cancelled'
+- `additionalData` (object, optional): Additional data for the update
+
+**Returns:**
+- Object with the following structure:
+  - On success: `{ success: true, order: { id, type, message, metadata, timestamp }, message: 'Order status updated successfully' }`
+  - On failure: `{ success: false, error: 'Error message' }`
+
+**Example:**
+```javascript
+const update = updateOrderStatus('ORD-12345', 'processing', {
+  warehouse_location: 'Warehouse-B',
+  estimated_ship_date: '2024-01-22'
+});
+```
+
+#### `cancelOrder(orderId, reason)`
+
+Cancels an order.
+
+**Parameters:**
+- `orderId` (string, required): The order ID to cancel
+- `reason` (string, optional): Reason for cancellation
+
+**Returns:**
+- Object with the following structure:
+  - On success: `{ success: true, order: { id, type, message, metadata, timestamp }, message: 'Order cancelled successfully' }`
+  - On failure: `{ success: false, error: 'Error message' }`
+
+**Example:**
+```javascript
+const cancellation = cancelOrder('ORD-12345', 'Customer requested cancellation');
+```
+
+#### `fulfillOrder(orderId, fulfillmentData)`
+
+Marks an order as fulfilled.
+
+**Parameters:**
+- `orderId` (string, required): The order ID to fulfill
+- `fulfillmentData` (object, optional): Fulfillment details (e.g., tracking number, carrier)
+
+**Returns:**
+- Object with the following structure:
+  - On success: `{ success: true, order: { id, type, message, metadata, timestamp }, message: 'Order fulfilled successfully' }`
+  - On failure: `{ success: false, error: 'Error message' }`
+
+**Example:**
+```javascript
+const fulfillment = fulfillOrder('ORD-12345', {
+  tracking_number: 'TRACK-123',
+  carrier: 'UPS',
+  estimated_delivery: '2024-01-25'
+});
+```
+
+#### `getOrderEvents(filters)`
+
+Retrieves order events, optionally filtered by order_id, customer_id, or status.
+
+**Parameters:**
+- `filters` (object, optional): Optional filters with the following fields:
+  - `order_id` (string): Filter by order ID
+  - `customer_id` (string): Filter by customer ID
+  - `status` (string): Filter by order status
+
+**Returns:**
+- Object with the following structure:
+  - `{ success: true, events: [...], count: number }`
+
+**Example:**
+```javascript
+// Get all order events
+const allOrders = getOrderEvents();
+
+// Filter by order ID
+const orderEvents = getOrderEvents({ order_id: 'ORD-12345' });
+
+// Filter by customer
+const customerOrders = getOrderEvents({ customer_id: 'CUST-789' });
+
+// Filter by status
+const processingOrders = getOrderEvents({ status: 'processing' });
+```
+
 ## Examples
 
 Run the example files to see the APIs in action:
@@ -306,6 +478,7 @@ Run the example files to see the APIs in action:
 ```bash
 node example.js                    # Login and event API examples
 node poll-engagement-example.js    # Poll engagement tracking examples
+node order-management-example.js   # Order management (Gamma Line) examples
 ```
 
 ## Testing
@@ -313,8 +486,9 @@ node poll-engagement-example.js    # Poll engagement tracking examples
 Run the test suite for all APIs:
 
 ```bash
-npm test                        # Login and event API tests
-node poll-engagement.test.js    # Poll engagement tracking tests
+npm test                            # Login and event API tests
+node poll-engagement.test.js        # Poll engagement tracking tests
+node order-management.test.js       # Order management (Gamma Line) tests
 ```
 
 Or run tests individually:
