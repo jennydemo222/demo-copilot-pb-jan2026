@@ -13,6 +13,7 @@ A simple login function implementation in Node.js with an Event API for logging 
 - **Event API** for creating and retrieving events
 - Event filtering and counting capabilities
 - **Poll Engagement Tracking** with memory leak prevention and granular analytics
+- **DLP (Data Loss Prevention) Scanning** to detect sensitive data patterns in content and objects
 
 ## Installation
 
@@ -299,6 +300,61 @@ const specificEvents = getPollEngagementEvents({
 });
 ```
 
+### DLP Scanning API
+
+#### `scanContent(content)`
+
+Scans a text string for sensitive data patterns.
+
+**Parameters:**
+- `content` (string): The text to scan
+
+**Returns:**
+- On success: `{ success: true, safe: boolean, findings: [...], summary: { totalFindings, scannedLength } }`
+- On failure: `{ success: false, error: 'Error message' }`
+
+**Detected patterns:**
+- Credit card numbers (Visa, Mastercard, Amex, Discover)
+- Social Security Numbers (SSN)
+- Email addresses
+- Phone numbers
+- API keys and tokens
+- IP addresses
+
+**Example:**
+```javascript
+const { scanContent, scanObject } = require('./dlp');
+
+const result = scanContent('Contact me at user@example.com or call 800-555-1234.');
+if (!result.safe) {
+  console.log('Sensitive data detected:', result.findings);
+}
+```
+
+#### `scanObject(obj)`
+
+Recursively scans all string values in an object for sensitive data patterns.
+
+**Parameters:**
+- `obj` (object): The object to scan (non-array)
+
+**Returns:**
+- On success: `{ success: true, safe: boolean, fieldFindings: [...], summary: { totalFindings, fieldsScanned, fieldsWithFindings } }`
+- On failure: `{ success: false, error: 'Error message' }`
+
+**Example:**
+```javascript
+const result = scanObject({
+  user: { name: 'John', contact: 'john@example.com' },
+  notes: 'SSN: 123-45-6789'
+});
+if (!result.safe) {
+  result.fieldFindings.forEach(f => {
+    console.log(`Field "${f.field}" contains:`, f.findings.map(x => x.description));
+  });
+}
+```
+
 ## Examples
 
 Run the example files to see the APIs in action:
@@ -313,8 +369,7 @@ node poll-engagement-example.js    # Poll engagement tracking examples
 Run the test suite for all APIs:
 
 ```bash
-npm test                        # Login and event API tests
-node poll-engagement.test.js    # Poll engagement tracking tests
+npm test                        # All tests including DLP scanning tests
 ```
 
 Or run tests individually:
@@ -322,7 +377,9 @@ Or run tests individually:
 ```bash
 node test.js                # Login tests
 node event.test.js          # Event API tests
+node guest-login.test.js    # Guest login tests
 node poll-engagement.test.js # Poll engagement tests
+node dlp.test.js            # DLP scanning tests
 ```
 
 ## Security Note
