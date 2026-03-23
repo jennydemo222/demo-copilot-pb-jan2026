@@ -325,6 +325,96 @@ node event.test.js          # Event API tests
 node poll-engagement.test.js # Poll engagement tests
 ```
 
+## PostgreSQL Connection
+
+This project uses in-memory storage for demonstration purposes. To connect to a PostgreSQL database in a real environment, use the [`pg`](https://node-postgres.com/) package (node-postgres).
+
+### Installation
+
+```bash
+npm install pg
+```
+
+### Environment Variables
+
+Configure the connection using the following environment variables:
+
+| Variable | Description | Default |
+|---|---|---|
+| `PGHOST` | PostgreSQL server hostname | `localhost` |
+| `PGPORT` | PostgreSQL server port | `5432` |
+| `PGDATABASE` | Database name | — |
+| `PGUSER` | Database user | — |
+| `PGPASSWORD` | Database password | — |
+| `DATABASE_URL` | Full connection string (overrides individual variables) | — |
+
+You can also supply all settings as a single `DATABASE_URL` connection string:
+
+```
+DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/<database>
+```
+
+For example:
+
+```
+DATABASE_URL=postgresql://myuser:mypassword@localhost:5432/myapp
+```
+
+### Example Connection
+
+```javascript
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  // Alternatively, use individual environment variables:
+  // host:     process.env.PGHOST     || 'localhost',
+  // port:     process.env.PGPORT     || 5432,
+  // database: process.env.PGDATABASE,
+  // user:     process.env.PGUSER,
+  // password: process.env.PGPASSWORD,
+});
+
+// Test the connection
+pool.query('SELECT NOW()', (err, res) => {
+  if (err) {
+    console.error('Database connection error:', err);
+  } else {
+    console.log('Connected to PostgreSQL at:', res.rows[0].now);
+  }
+});
+
+module.exports = pool;
+```
+
+### Replacing In-Memory Storage
+
+To migrate from in-memory storage to PostgreSQL:
+
+1. **Users** – replace the hardcoded `users` array in `login.js` with a `SELECT` query against a `users` table.
+2. **Events** – replace the `events` array in `event.js` with `INSERT` / `SELECT` queries against an `events` table.
+3. **Passwords** – store hashed passwords (bcrypt, argon2, or scrypt) and compare using the appropriate library rather than plain-text comparison.
+
+**Suggested schema:**
+
+```sql
+CREATE TABLE users (
+  id       SERIAL PRIMARY KEY,
+  username VARCHAR(255) UNIQUE NOT NULL,
+  -- store the hashed password (bcrypt, argon2, etc.)
+  password TEXT NOT NULL,
+  role     VARCHAR(50)  NOT NULL
+);
+
+CREATE TABLE events (
+  id        SERIAL PRIMARY KEY,
+  type      VARCHAR(100) NOT NULL,
+  message   TEXT         NOT NULL,
+  metadata  JSONB,
+  timestamp TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+```
+
 ## Security Note
 
 This is a demonstration implementation. In a production environment:
@@ -332,6 +422,6 @@ This is a demonstration implementation. In a production environment:
 - Use proper password hashing (bcrypt, argon2, etc.)
 - Implement rate limiting
 - Use secure session management
-- Connect to a real database
+- Connect to a real database (see [PostgreSQL Connection](#postgresql-connection) above)
 - Add logging and monitoring
 - Store events in a persistent database instead of in-memory storage
