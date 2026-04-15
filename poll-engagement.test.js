@@ -356,6 +356,22 @@ test('Should fail with empty poll_id filter', () => {
   assert(result.error.includes('poll_id'), 'Error should mention poll_id');
 });
 
+// Test 25: Handle null filters without throwing
+test('Should return all poll engagement events when filters is null', () => {
+  const result = getPollEngagementEvents(null);
+  assert(result.success === true, 'Retrieval should succeed');
+  assert(Array.isArray(result.events), 'Events should be returned');
+  assert(result.count === result.events.length, 'Count should match returned events length');
+});
+
+// Test 26: Handle undefined filters without throwing
+test('Should return all poll engagement events when filters is undefined', () => {
+  const result = getPollEngagementEvents(undefined);
+  assert(result.success === true, 'Retrieval should succeed');
+  assert(Array.isArray(result.events), 'Events should be returned');
+  assert(result.count === result.events.length, 'Count should match returned events length');
+});
+
 // Print summary
 console.log('\n' + '='.repeat(50));
 console.log(`Tests passed: ${passed}`);
