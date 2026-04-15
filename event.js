@@ -416,27 +416,29 @@ function getPollEngagementEvents(filters = {}) {
       }
     }
 
+    const normalizedFilters = filters || {};
+
     // Get all poll engagement events
     const pollEvents = events.filter(e => e.type === 'poll_engagement');
 
     let filteredEvents = pollEvents;
 
     // Apply filters if provided
-    if (filters.poll_id) {
+    if (normalizedFilters.poll_id) {
       filteredEvents = filteredEvents.filter(e => 
-        e.metadata && e.metadata.poll_id === filters.poll_id
+        e.metadata && e.metadata.poll_id === normalizedFilters.poll_id
       );
     }
 
-    if (filters.user_id) {
+    if (normalizedFilters.user_id) {
       filteredEvents = filteredEvents.filter(e => 
-        e.metadata && e.metadata.user_id === filters.user_id
+        e.metadata && e.metadata.user_id === normalizedFilters.user_id
       );
     }
 
-    if (filters.event_type) {
+    if (normalizedFilters.event_type) {
       filteredEvents = filteredEvents.filter(e => 
-        e.metadata && e.metadata.event_type === filters.event_type
+        e.metadata && e.metadata.event_type === normalizedFilters.event_type
       );
     }
 
