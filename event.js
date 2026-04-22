@@ -9,6 +9,12 @@
  */
 const events = [];
 let eventIdCounter = 1;
+const SUPPORTED_PLATFORMS = ['ios', 'android', 'web'];
+const SUPPORTED_INTERACTION_TYPES = ['touch', 'tap', 'swipe', 'long_press', 'click', 'keyboard'];
+
+function isMobilePlatform(platform) {
+  return platform === 'ios' || platform === 'android';
+}
 
 /**
  * Creates a new event
@@ -298,6 +304,42 @@ function trackPollEngagement(payload) {
       }
     }
 
+    // Validate optional mobile platform context
+    let platform = 'web';
+    if (payload.platform !== undefined && payload.platform !== null) {
+      if (typeof payload.platform !== 'string' || payload.platform.trim().length === 0) {
+        return {
+          success: false,
+          error: 'platform must be a non-empty string when provided'
+        };
+      }
+      platform = payload.platform.trim().toLowerCase();
+      if (!SUPPORTED_PLATFORMS.includes(platform)) {
+        return {
+          success: false,
+          error: `platform must be one of: ${SUPPORTED_PLATFORMS.join(', ')}`
+        };
+      }
+    }
+
+    // Validate optional interaction type for touch/click behavior
+    let interactionType = isMobilePlatform(platform) ? 'touch' : 'click';
+    if (payload.interaction_type !== undefined && payload.interaction_type !== null) {
+      if (typeof payload.interaction_type !== 'string' || payload.interaction_type.trim().length === 0) {
+        return {
+          success: false,
+          error: 'interaction_type must be a non-empty string when provided'
+        };
+      }
+      interactionType = payload.interaction_type.trim().toLowerCase();
+      if (!SUPPORTED_INTERACTION_TYPES.includes(interactionType)) {
+        return {
+          success: false,
+          error: `interaction_type must be one of: ${SUPPORTED_INTERACTION_TYPES.join(', ')}`
+        };
+      }
+    }
+
     // Validate timestamp format (after trimming)
     const timestamp = new Date(payload.timestamp.trim());
     if (isNaN(timestamp.getTime())) {
@@ -339,7 +381,9 @@ function trackPollEngagement(payload) {
       previous_choice: payload.previous_choice ? payload.previous_choice.trim() : null,
       new_choice: payload.new_choice.trim(),
       timestamp: payload.timestamp.trim(),
-      session_id: payload.session_id ? payload.session_id.trim() : null
+      session_id: payload.session_id ? payload.session_id.trim() : null,
+      platform,
+      interaction_type: interactionType
     };
 
     // Use the existing createEvent function with properly structured data
@@ -414,6 +458,22 @@ function getPollEngagementEvents(filters = {}) {
           };
         }
       }
+
+      if (filters.platform !== undefined && filters.platform !== null) {
+        if (typeof filters.platform !== 'string' || filters.platform.trim().length === 0) {
+          return {
+            success: false,
+            error: 'platform filter must be a non-empty string when provided'
+          };
+        }
+        const normalizedPlatform = filters.platform.trim().toLowerCase();
+        if (!SUPPORTED_PLATFORMS.includes(normalizedPlatform)) {
+          return {
+            success: false,
+            error: `platform filter must be one of: ${SUPPORTED_PLATFORMS.join(', ')}`
+          };
+        }
+      }
     }
 
     // Get all poll engagement events
@@ -437,6 +497,13 @@ function getPollEngagementEvents(filters = {}) {
     if (filters.event_type) {
       filteredEvents = filteredEvents.filter(e => 
         e.metadata && e.metadata.event_type === filters.event_type
+      );
+    }
+
+    if (filters.platform) {
+      const normalizedPlatform = filters.platform.trim().toLowerCase();
+      filteredEvents = filteredEvents.filter(e =>
+        e.metadata && e.metadata.platform === normalizedPlatform
       );
     }
 

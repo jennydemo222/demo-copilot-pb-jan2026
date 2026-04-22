@@ -13,6 +13,7 @@ A simple login function implementation in Node.js with an Event API for logging 
 - **Event API** for creating and retrieving events
 - Event filtering and counting capabilities
 - **Poll Engagement Tracking** with memory leak prevention and granular analytics
+- **Mobile-aware poll engagement tracking** for iOS/Android/Web and touch interaction analytics
 
 ## Installation
 
@@ -250,6 +251,8 @@ Tracks poll engagement events with granular data. Prevents memory leaks through 
   - `timestamp` (string, required): ISO 8601 timestamp of the event
   - `previous_choice` (string, optional): Previous choice (for vote changes)
   - `session_id` (string, optional): Session identifier for behavioral analytics
+  - `platform` (string, optional): Client platform (`ios`, `android`, `web`). Defaults to `web`.
+  - `interaction_type` (string, optional): Interaction mode (`touch`, `tap`, `swipe`, `long_press`, `click`, `keyboard`). Defaults to `touch` on mobile and `click` on web.
 
 **Returns:**
 - Object with the following structure:
@@ -265,7 +268,9 @@ const result = trackPollEngagement({
   previous_choice: 'option_1',
   new_choice: 'option_2',
   timestamp: '2024-01-15T14:30:00Z',
-  session_id: 'session_xyz'
+  session_id: 'session_xyz',
+  platform: 'ios',
+  interaction_type: 'tap'
 });
 ```
 
@@ -278,6 +283,7 @@ Retrieves poll engagement events with optional filtering.
   - `poll_id` (string): Filter by poll ID
   - `user_id` (string): Filter by user ID
   - `event_type` (string): Filter by engagement type
+  - `platform` (string): Filter by client platform (`ios`, `android`, `web`)
 
 **Returns:**
 - Object with the following structure:
