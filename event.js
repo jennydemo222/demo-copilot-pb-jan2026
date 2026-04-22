@@ -12,6 +12,10 @@ let eventIdCounter = 1;
 const SUPPORTED_PLATFORMS = ['ios', 'android', 'web'];
 const SUPPORTED_INTERACTION_TYPES = ['touch', 'tap', 'swipe', 'long_press', 'click', 'keyboard'];
 
+function isMobilePlatform(platform) {
+  return platform === 'ios' || platform === 'android';
+}
+
 /**
  * Creates a new event
  * @param {string} type - The type of event (e.g., 'login', 'logout', 'error')
@@ -319,7 +323,7 @@ function trackPollEngagement(payload) {
     }
 
     // Validate optional interaction type for touch/click behavior
-    let interactionType = platform === 'ios' || platform === 'android' ? 'touch' : 'click';
+    let interactionType = isMobilePlatform(platform) ? 'touch' : 'click';
     if (payload.interaction_type !== undefined && payload.interaction_type !== null) {
       if (typeof payload.interaction_type !== 'string' || payload.interaction_type.trim().length === 0) {
         return {

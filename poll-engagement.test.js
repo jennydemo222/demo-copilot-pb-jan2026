@@ -415,6 +415,23 @@ test('Should filter poll engagement events by platform', () => {
   assert(result.events.every(e => e.metadata.platform === 'ios'), 'All events should be from iOS platform');
 });
 
+// Test 29: Fail with unsupported interaction type
+test('Should fail with unsupported interaction_type', () => {
+  const payload = {
+    event_type: 'vote_cast',
+    poll_id: 'mobile_004',
+    user_id: 'invalid_interaction_user',
+    new_choice: 'option_1',
+    timestamp: '2024-01-15T15:03:00Z',
+    platform: 'android',
+    interaction_type: 'pinch'
+  };
+
+  const result = trackPollEngagement(payload);
+  assert(result.success === false, 'Tracking should fail');
+  assert(result.error.includes('interaction_type'), 'Error should mention interaction_type');
+});
+
 // Print summary
 console.log('\n' + '='.repeat(50));
 console.log(`Tests passed: ${passed}`);
