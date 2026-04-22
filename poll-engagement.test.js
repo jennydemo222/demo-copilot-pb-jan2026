@@ -356,6 +356,65 @@ test('Should fail with empty poll_id filter', () => {
   assert(result.error.includes('poll_id'), 'Error should mention poll_id');
 });
 
+// Test 25: Track iOS touch interaction
+test('Should track poll engagement for iOS platform with tap interaction', () => {
+  const payload = {
+    event_type: 'vote_cast',
+    poll_id: 'mobile_001',
+    user_id: 'ios_user',
+    new_choice: 'option_1',
+    timestamp: '2024-01-15T15:00:00Z',
+    platform: 'iOS',
+    interaction_type: 'tap'
+  };
+
+  const result = trackPollEngagement(payload);
+  assert(result.success === true, 'Tracking should succeed');
+  assert(result.event.metadata.platform === 'ios', 'Platform should be normalized to ios');
+  assert(result.event.metadata.interaction_type === 'tap', 'Interaction type should be tap');
+});
+
+// Test 26: Default mobile interaction type should be touch
+test('Should default interaction_type to touch for Android events', () => {
+  const payload = {
+    event_type: 'vote_cast',
+    poll_id: 'mobile_002',
+    user_id: 'android_user',
+    new_choice: 'option_2',
+    timestamp: '2024-01-15T15:01:00Z',
+    platform: 'android'
+  };
+
+  const result = trackPollEngagement(payload);
+  assert(result.success === true, 'Tracking should succeed');
+  assert(result.event.metadata.platform === 'android', 'Platform should be android');
+  assert(result.event.metadata.interaction_type === 'touch', 'Default interaction should be touch for mobile');
+});
+
+// Test 27: Fail with unsupported platform
+test('Should fail with unsupported mobile platform', () => {
+  const payload = {
+    event_type: 'vote_cast',
+    poll_id: 'mobile_003',
+    user_id: 'invalid_platform_user',
+    new_choice: 'option_3',
+    timestamp: '2024-01-15T15:02:00Z',
+    platform: 'windows_phone'
+  };
+
+  const result = trackPollEngagement(payload);
+  assert(result.success === false, 'Tracking should fail');
+  assert(result.error.includes('platform'), 'Error should mention platform');
+});
+
+// Test 28: Filter by platform
+test('Should filter poll engagement events by platform', () => {
+  const result = getPollEngagementEvents({ platform: 'ios' });
+  assert(result.success === true, 'Retrieval should succeed');
+  assert(result.count >= 1, 'Should have at least one iOS event');
+  assert(result.events.every(e => e.metadata.platform === 'ios'), 'All events should be from iOS platform');
+});
+
 // Print summary
 console.log('\n' + '='.repeat(50));
 console.log(`Tests passed: ${passed}`);
