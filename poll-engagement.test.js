@@ -356,7 +356,7 @@ test('Should fail with empty poll_id filter', () => {
   assert(result.error.includes('poll_id'), 'Error should mention poll_id');
 });
 
-// Test 25: Track iOS touch interaction
+// Test 25: Track iOS tap interaction
 test('Should track poll engagement for iOS platform with tap interaction', () => {
   const payload = {
     event_type: 'vote_cast',
@@ -364,7 +364,7 @@ test('Should track poll engagement for iOS platform with tap interaction', () =>
     user_id: 'ios_user',
     new_choice: 'option_1',
     timestamp: '2024-01-15T15:00:00Z',
-    platform: 'iOS',
+    platform: 'ios',
     interaction_type: 'tap'
   };
 
